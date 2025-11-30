@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Test & Go — Voice Agent</title>
+  <link rel="stylesheet" href="/static/index.css" />
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Test & Go — Voice Agent</h1>
+      <div class="small muted">Make calls, upload audio, and inspect debug files</div>
+    </div>
+    <div>
+      <a class="link" href="/dashboard" target="_blank">Open Dashboard</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="panel">
+      <h2>Make an outbound call</h2>
+
+      <label for="toNumber">Phone number (E.164)</label>
+      <input id="toNumber" type="text" placeholder="+2011XXXX..." />
+
+      <label for="baseUrl">Base URL (optional)</label>
+      <input id="baseUrl" type="text" placeholder="https://your-public-url.ngrok.io" />
+
+      <div style="margin-top:12px; display:flex; gap:8px;">
+        <button id="callBtn">Call</button>
+        <button id="hangBtn" disabled>Disable (use Twilio console)</button>
+      </div>
+
+      <hr style="margin:14px 0" />
+
+      <h2>Upload audio for quick test</h2>
+      <label for="audioFile" class="small muted">Choose a local audio file (webm/wav/mp3)</label>
+      <input id="audioFile" type="file" accept="audio/*" />
+
+      <div style="margin-top:10px">
+        <button id="uploadBtn">Upload & Process</button>
+      </div>
+
+      <div id="result" style="margin-top:14px"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Recent logs & responses</h2>
+      <div class="muted small">Responses returned by the AI and TTS audio (for uploads).</div>
+      <div class="log" id="logArea">No actions yet.</div>
+    </section>
+  </main>
+
+  <script>
+    const logArea = document.getElementById('logArea');
+    const callBtn = document.getElementById('callBtn');
+    const uploadBtn = document.getElementById('uploadBtn');
+
+    function appendLog(s) {
+      const now = new Date().toLocaleTimeString();
+      logArea.textContent = `[${now}] ${s}\n` + logArea.textContent;
+    }
+
+    callBtn.onclick = async () => {
+      const to = document.getElementById('toNumber').value.trim();
+      const base = document.getElementById('baseUrl').value.trim();
+      if (!to) { alert('Enter a phone number'); return; }
+      appendLog(`Requesting call to ${to} ...`);
+      try {
+        const payload = { to };
+        if (base) payload.base_url = base;
+        const res = await fetch('/make-call', { method: 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+        const j = await res.json();
+        appendLog(`Call request response: ${JSON.stringify(j)}`);
+      } catch (err) {
+        appendLog('Call request failed: ' + err.message);
+      }
+    };
+
+    uploadBtn.onclick = async () => {
+      const input = document.getElementById('audioFile');
+      if (!input.files.length) { alert('Choose a local audio file (webm/wav/mp3)'); return; }
+      const file = input.files[0];
+      appendLog(`Uploading ${file.name} ...`);
+      const form = new FormData();
+      form.append('file', file);
+      try {
+        const res = await fetch('/process-audio-direct', { method: 'POST', body: form });
+        const j = await res.json();
+        if (j.error) {
+          appendLog('Processing error: ' + j.error);
+          return;
+        }
+        appendLog('Transcript: ' + (j.transcript || '<empty>'));
+        appendLog('Intent: ' + (j.intent || '<none>'));
+        appendLog('Response text: ' + (j.response_text || '<none>'));
+        const resultDiv = document.getElementById('result');
+        resultDiv.innerHTML = '';
+        const p = document.createElement('div');
+        p.className = 'result-item';
+        p.textContent = 'AI response: ' + (j.response_text || '');
+        resultDiv.appendChild(p);
+        if (j.audio_url) {
+          const audioWrapper = document.createElement('div');
+          audioWrapper.className = 'audio';
+          const audio = document.createElement('audio');
+          audio.controls = true;
+          // Ensure absolute URL for audio
+          if (j.audio_url.startsWith('http')) {
+            audio.src = j.audio_url;
+          } else {
+            audio.src = window.location.origin + j.audio_url;
+          }
+          audioWrapper.appendChild(audio);
+          resultDiv.appendChild(audioWrapper);
+        }
+      } catch (err) {
+        appendLog('Upload/process failed: ' + err.message);
+      }
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Voice Agent Dashboard</title>
+  <link rel="stylesheet" href="/static/dashboard.css" />
+</head>
+<body>
+  <header>
+    <h1>Test & Go — Voice Agent Dashboard</h1>
+    <div id="status">Connecting...</div>
+  </header>
+
+  <main>
+    <section class="left">
+      <h2>Active / Recent Calls</h2>
+      <div id="calls-list">Loading...</div>
+    </section>
+
+    <section class="right">
+      <h2>Call Detail</h2>
+      <div id="call-detail">
+        <div class="placeholder">Select a call to view details</div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <small>Refreshes automatically every 2s. Debug files served from /api/debug/{filename}</small>
+  </footer>
+
+  <script src="/static/dashboard.js"></script>
+</body>
+</html>
