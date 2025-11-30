@@ -275,12 +275,3 @@ Check debug recordings:
 
 ---
 
-Contact / Next steps
-If you want, I can:
-- Produce a sample `requirements.txt` used in this project.
-- Generate a minimal `docker-compose` file to run locally with proper env injection.
-- Create a small test script to validate Twilio credentials and recording access.
-Tell me which you prefer and I will prepare it.
-
-Thank you — paste any log excerpts if you hit issues and I’ll help debug.  
-```
